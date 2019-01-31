@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.Settings.Secure;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,6 +36,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,23 +61,70 @@ public class SeafConnection {
     private static final int CONNECTION_TIMEOUT = 15000;
     private static final int READ_TIMEOUT = 30000;
     private Account account;
+    private String true_server;
 
     public SeafConnection(Account act) {
         account = act;
+        true_server = account.server;
+
+        try {
+            Map server_pair = new HashMap();
+
+            File file = new File(Environment.getExternalStorageDirectory(),".seafile_server.txt");
+            FileInputStream is = new FileInputStream(file);
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            String read = new String(b);
+            String[] server_pair_li = read.split(";");
+            for (int i = 0 ; i <server_pair_li.length ; i++ ){
+                String [] split_li  = server_pair_li[i].split("\\*",2);
+                server_pair.put(split_li[0], split_li[1]);
+            }
+            String s1 = account.server.substring(0,account.server.length()-1);
+            String s2 = server_pair.get(s1).toString();
+
+            if (pingIP(s1)) {
+                true_server = s1+"/";
+
+            } else {
+                true_server = s2+"/";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+    private Boolean pingIP(String HTTPaddress) {
+        String[] IPandPort_  = HTTPaddress.split("/");
+        String[] IP_  = IPandPort_[2].split(":");
+
+        try {
+            Process p = Runtime.getRuntime().exec("ping -c 2 -w 4 "+IP_[0]);
+            int status = p.waitFor();
+            if (status == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public Account getAccount() {
         return account;
     }
 
+
     private HttpRequest prepareApiGetRequest(String apiPath, Map<String, ?> params) throws IOException {
-        HttpRequest req = HttpRequest.get(account.server + apiPath, params, false);
+        HttpRequest req = HttpRequest.get(true_server + apiPath, params, false);
         setRequestCommon(req);
         return req;
     }
 
     private HttpRequest prepareApiPutRequest(String apiPath, Map<String, ?> params) throws IOException {
-        HttpRequest req = HttpRequest.put(account.server + apiPath, params, false);
+        HttpRequest req = HttpRequest.put(true_server + apiPath, params, false);
         setRequestCommon(req);
         return req;
     }
@@ -134,7 +183,7 @@ public class SeafConnection {
      */
     private HttpRequest prepareApiPostRequest(String apiPath, boolean withToken, Map<String, ?> params, boolean encode)
             throws HttpRequestException {
-        HttpRequest req = HttpRequest.post(account.server + apiPath, params, encode)
+        HttpRequest req = HttpRequest.post(true_server + apiPath, params, encode)
                 .followRedirects(true)
                 .connectTimeout(CONNECTION_TIMEOUT);
 
@@ -147,7 +196,7 @@ public class SeafConnection {
 
     private HttpRequest prepareApiDeleteRequest(String apiPath, Map<String, ?> params)
             throws HttpRequestException {
-        HttpRequest req = HttpRequest.delete(account.server + apiPath, params, false)
+        HttpRequest req = HttpRequest.delete(true_server + apiPath, params, false)
                 .followRedirects(true)
                 .connectTimeout(CONNECTION_TIMEOUT);
 
@@ -166,7 +215,7 @@ public class SeafConnection {
         HttpRequest req = null;
         try {
             req = prepareApiPostRequest("api2/auth-token/", false, null);
-            // Log.d(DEBUG_TAG, "Login to " + account.server + "api2/auth-token/");
+            // Log.d(DEBUG_TAG, "Login to " + true_server + "api2/auth-token/");
 
             if (!TextUtils.isEmpty(authToken)) {
                 req.header("X-Seafile-OTP", authToken);
@@ -461,7 +510,7 @@ public class SeafConnection {
             String fileID = req.header("oid");
             // should return "\"http://gonggeng.org:8082/...\"" or "\"https://gonggeng.org:8082/...\"
             if (result.startsWith("\"/") && fileID != null) {
-                result = account.server+result.substring(2,result.length() - 1);
+                result = true_server+result.substring(2,result.length() - 1);
             } 
             else if (result.startsWith("\"http") && fileID != null) {
                 result = result.substring(1, result.length() - 1);
@@ -734,7 +783,7 @@ public class SeafConnection {
     public String  getEncryptRepo(String repoID) throws SeafException {
         Response response = null;
         try {
-            String url = account.server + "api2/repos/" + repoID;
+            String url = true_server + "api2/repos/" + repoID;
             Request request = new Request.Builder()
                     .url(url)
                     .header("Authorization", "Token " + account.token)
@@ -784,7 +833,7 @@ public class SeafConnection {
             String result = new String(req.bytes(), "UTF-8");
             // should return "\"http://gonggeng.org:8082/...\"" or "\"https://gonggeng.org:8082/...\"
             if (result.startsWith("\"/")) {
-                return account.server+result.substring(2,result.length() - 1);
+                return true_server+result.substring(2,result.length() - 1);
             } 
             else if (result.startsWith("\"http")) {
                 // remove the starting and trailing quote

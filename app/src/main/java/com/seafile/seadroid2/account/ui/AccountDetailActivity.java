@@ -1,5 +1,6 @@
 package com.seafile.seadroid2.account.ui;
 
+import android.os.Environment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -44,8 +46,13 @@ import com.seafile.seadroid2.util.Utils;
 
 import org.json.JSONException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener {
     private static final String DEBUG_TAG = "AccountDetailActivity";
@@ -57,18 +64,24 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
     private TextView statusView;
     private Button loginButton;
     private EditText serverText;
+    private EditText server2Text;
     private ProgressDialog progressDialog;
     private EmailAutoCompleteTextView emailText;
     private EditText passwdText;
+    private LinearLayout server2Line;
+    private CheckBox doubleAddressesCheckBox;
     private CheckBox httpsCheckBox;
+    private CheckBox httpsCheckBox2;
     private TextView seahubUrlHintText;
     private ImageView clearEmail, clearPasswd, ivEyeClick;
     private RelativeLayout rlEye;
     private TextInputLayout authTokenLayout;
     private EditText authTokenText;
+    private TextInputLayout server_hint1;
 
     private android.accounts.AccountManager mAccountManager;
     private boolean serverTextHasFocus;
+    private boolean server2TextHasFocus;
     private boolean isPasswddVisible;
     private CheckBox cbRemDevice;
     private String mSessionKey;
@@ -83,8 +96,12 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
 
         statusView = (TextView) findViewById(R.id.status_view);
         loginButton = (Button) findViewById(R.id.login_button);
-        httpsCheckBox = (CheckBox) findViewById(R.id.https_checkbox);
+        doubleAddressesCheckBox = (CheckBox) findViewById(R.id.double_addresses_checkbox);
+        server2Line = (LinearLayout) findViewById(R.id.server2_linearlayout);
+        httpsCheckBox = (CheckBox) findViewById(R.id.https_checkbox1);
+        httpsCheckBox2 = (CheckBox) findViewById(R.id.https_checkbox2);
         serverText = (EditText) findViewById(R.id.server_url);
+        server2Text = (EditText) findViewById(R.id.server2_url);
         emailText = (EmailAutoCompleteTextView) findViewById(R.id.email_address);
         passwdText = (EditText) findViewById(R.id.password);
         seahubUrlHintText = (TextView) findViewById(R.id.seahub_url_hint);
@@ -94,6 +111,8 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
         rlEye = (RelativeLayout) findViewById(R.id.rl_layout_eye);
         ivEyeClick = (ImageView) findViewById(R.id.iv_eye_click);
 
+        server_hint1 = (TextInputLayout) findViewById(R.id.server_hint);
+
         authTokenLayout = (TextInputLayout) findViewById(R.id.auth_token_hint);
         authTokenText = (EditText) findViewById(R.id.auth_token);
         authTokenLayout.setVisibility(View.GONE);
@@ -101,6 +120,7 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
         cbRemDevice = findViewById(R.id.remember_device);
         cbRemDevice.setVisibility(View.GONE);
         setupServerText();
+        setupServer2Text();
 
         Intent intent = getIntent();
 
@@ -115,11 +135,37 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
             String email = mAccountManager.getUserData(account, Authenticator.KEY_EMAIL);
             mSessionKey = mAccountManager.getUserData(account, Authenticator.SESSION_KEY);
             // isFromEdit = mAccountManager.getUserData(account, Authenticator.KEY_EMAIL);
+            String server1="";
+            String server2="";
+            try {
+                Map server_pair = new HashMap();
 
-            if (server.startsWith(HTTPS_PREFIX))
+                File file = new File(Environment.getExternalStorageDirectory(),".seafile_server.txt");
+                FileInputStream is = new FileInputStream(file);
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                String read = new String(b);
+                String[] server_pair_li = read.split(";");
+                for (int i = 0 ; i <server_pair_li.length ; i++ ){
+                    String [] split_li  = server_pair_li[i].split("\\*",2);
+                    server_pair.put(split_li[0], split_li[1]);
+                }
+
+                server2 = server_pair.get(server).toString();
+                server1 = server.substring(0,server.length()-1);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (server1.startsWith(HTTPS_PREFIX))
                 httpsCheckBox.setChecked(true);
+            if (server2.startsWith(HTTPS_PREFIX))
+                httpsCheckBox2.setChecked(true);
 
-            serverText.setText(server);
+
+            serverText.setText(server1);
+            server2Text.setText(server2);
             emailText.setText(email);
             emailText.requestFocus();
             seahubUrlHintText.setVisibility(View.GONE);
@@ -132,6 +178,7 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
             emailText.requestFocus();
         } else {
             serverText.setText(HTTP_PREFIX);
+            server2Text.setText(HTTP_PREFIX);
             int prefixLen = HTTP_PREFIX.length();
             serverText.setSelection(prefixLen, prefixLen);
         }
@@ -299,11 +346,27 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
         return super.onOptionsItemSelected(item);
     }
 
+    public void onDoubleAddressesCheckboxClicked(View view) {
+        String server_hint_single = getResources().getString(R.string.server_hint_single);
+        String server_hint = getResources().getString(R.string.server_hint);
+        boolean DBcheckbox_status = doubleAddressesCheckBox.isChecked();
+        if (!DBcheckbox_status) {
+            server2Line.setVisibility(View.INVISIBLE);
+            server_hint1.setHint(server_hint_single);
+        }
+        else {
+            server_hint1.setHint(server_hint);
+            server2Line.setVisibility(View.VISIBLE);
+        }
+    }
+    public void onHttpsCheckboxClicked2(View view) {
+        refreshServerUrlPrefix(httpsCheckBox2, server2Text, server2TextHasFocus);
+    }
     public void onHttpsCheckboxClicked(View view) {
-        refreshServerUrlPrefix();
+        refreshServerUrlPrefix(httpsCheckBox, serverText, serverTextHasFocus);
     }
 
-    private void refreshServerUrlPrefix() {
+    private void refreshServerUrlPrefix(CheckBox httpsCheckBox, EditText serverText, Boolean serverTextHasFocus_) {
         boolean isHttps = httpsCheckBox.isChecked();
         String url = serverText.getText().toString();
         String prefix = isHttps ? HTTPS_PREFIX : HTTP_PREFIX;
@@ -315,7 +378,7 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
         // Change the text
         serverText.setText(prefix + urlWithoutScheme);
 
-        if (serverTextHasFocus) {
+        if (serverTextHasFocus_) {
             // Change the cursor position since we changed the text
             if (isHttps) {
                 int offset = oldOffset + 1;
@@ -362,10 +425,47 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
             }
         });
     }
+    private void setupServer2Text() {
+        server2Text.setOnFocusChangeListener(new View.OnFocusChangeListener () {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Log.d(DEBUG_TAG, "server2Text has focus: " + (hasFocus ? "yes" : "no"));
+                server2TextHasFocus = hasFocus;
+            }
+        });
+
+        server2Text.addTextChangedListener(new TextWatcher() {
+            private String old;
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                old = server2Text.getText().toString();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Don't allow the user to edit the "https://" or "http://" part of the serverText
+                String url = server2Text.getText().toString();
+                boolean isHttps = httpsCheckBox2.isChecked();
+                String prefix = isHttps ? HTTPS_PREFIX : HTTP_PREFIX;
+                if (!url.startsWith(prefix)) {
+                    int oldOffset = Math.max(prefix.length(), server2Text.getSelectionStart());
+                    server2Text.setText(old);
+                    server2Text.setSelection(oldOffset, oldOffset);
+                }
+            }
+        });
+    }
 
     /** Called when the user clicks the Login button */
     public void login(View view) {
         String serverURL = serverText.getText().toString().trim();
+        String server2URL = server2Text.getText().toString().trim();
+
         String email = emailText.getText().toString().trim();
         String passwd = passwdText.getText().toString();
 
@@ -374,10 +474,20 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 
         if (networkInfo != null && networkInfo.isConnected()) {
-            if (serverURL.length() == 0) {
+            String [] url_splited = serverURL.split("/");
+            String [] url2_splited = server2URL.split("/");
+
+            if (url_splited.length == 1 ) {
                 statusView.setText(R.string.err_server_andress_empty);
                 return;
             }
+            if (url2_splited.length == 1 ) {
+                if (doubleAddressesCheckBox.isChecked()) {
+                    statusView.setText(R.string.err_server_andress_empty);
+                    return;
+                }
+            }
+
 
             if (email.length() == 0) {
                 emailText.setError(getResources().getString(R.string.err_email_empty));
@@ -414,6 +524,17 @@ public class AccountDetailActivity extends BaseActivity implements Toolbar.OnMen
             if (getCurrentFocus() != null) {
                 InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+            }
+
+            try {
+                File file = new File(Environment.getExternalStorageDirectory(), ".seafile_server.txt");
+                RandomAccessFile fos = new RandomAccessFile(file,"rw");
+                String file_content = serverURL + '*' + server2URL + ";";
+                fos.seek(file.length());
+                fos.write(file_content.getBytes());
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             loginButton.setEnabled(false);

@@ -100,7 +100,7 @@
     <dimen name="lv_divider_height">1dp</dimen>
 
     <dimen name="cb_padding_left">20dp</dimen> <!-- CheckBox -->
-    <dimen name="cb_padding_top">10dp</dimen>
+    <dimen name="cb_padding_top">20dp</dimen>
     <dimen name="cb_btn_txt_size">16sp</dimen>
 
     <dimen name="rb_margin_top">5dp</dimen> <!-- RadioButton -->

@@ -12,7 +12,9 @@
   <string name="delete_file_f">删除文件</string>
   <string name="delete_dir">删除文件夹</string>
   <string name="name_hint">名称</string>
-  <string name="server_hint">云盘网址</string>
+  <string name="server_hint">服务器局域网地址</string>
+  <string name="server_hint_single">云盘网址</string>
+  <string name="server2_hint">服务器公网地址</string>
   <string name="email_hint">邮箱或用户名</string>
   <string name="passwd_hint">密码</string>
   <string name="passwd_min_len_limit_hint">密码(至少%d个字符)</string>
@@ -373,6 +375,11 @@
         <![CDATA[
         <h5>Seafile安卓客户端</h5>
         <p>%s</p>
+        <p>Revised by Qinkai Wu</p>
+        <p>
+            My Homepage:<br>
+            https://wu-2018.github.io<br>
+        </p>
         <h5>联系我们</h5>
         <p>
             Twitter: Seafile<br>

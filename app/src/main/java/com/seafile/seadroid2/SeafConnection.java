@@ -80,11 +80,11 @@ public class SeafConnection {
                 String [] split_li  = server_pair_li[i].split("\\*",2);
                 server_pair.put(split_li[0], split_li[1]);
             }
-            String s1 = account.server.substring(0,account.server.length()-1);
+            String s1 = account.server;
             String s2 = server_pair.get(s1).toString();
 
             if (pingIP(s1)) {
-                true_server = s1+"/";
+                true_server = s1;
 
             } else {
                 true_server = s2+"/";

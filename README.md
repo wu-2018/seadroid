@@ -1,3 +1,9 @@
+I have to admit that I had zero basis in Java before, so the recently few days I did spend lots of time and encountered many difficulties. Anyway now I've successfully remade this app and now it supports "double server addresses". Briefly, when the android phone connects to the local area network, it'll preferentially use the local server address(faster speed), while the device is outside the local network, it can automatically swift to public server address.
+
+It better suit my purpose now. And I hope it'll also help those who has the same demand.
+For more details, see my post here.
+
+***
 # Seafile Android Client [![Build Status](https://secure.travis-ci.org/haiwen/seadroid.png?branch=master)](http://travis-ci.org/haiwen/seadroid)
 
 The application has been published onto the market for easy access:

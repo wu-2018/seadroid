@@ -1,4 +1,4 @@
-I have to admit that I had zero basis in Java before, so the recently few days I did spend lots of time and encountered many difficulties. Anyway now I've successfully remade this app and now it supports "double server addresses". Briefly, when the android phone connects to the local area network, it'll preferentially use the local server address(faster speed), while the device is outside the local network, it can automatically swift to public server address.
+I have to admit that I had zero basis in Java before, so the recently few days I did spend lots of time and encountered many difficulties. Anyway now I've successfully remade this app and now it supports "double server addresses". Briefly, when the android phone connects to the local area network, it'll preferentially use the local server address(faster speed), while the device is outside the local network, it can automatically switch to public server address.
 
 Changes on the logging interface:  
 ![seadriod_change](https://wu-2018.github.io/img/blog/2019013001/seadroid_2.png)

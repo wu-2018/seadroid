@@ -1,7 +1,10 @@
 I have to admit that I had zero basis in Java before, so the recently few days I did spend lots of time and encountered many difficulties. Anyway now I've successfully remade this app and now it supports "double server addresses". Briefly, when the android phone connects to the local area network, it'll preferentially use the local server address(faster speed), while the device is outside the local network, it can automatically swift to public server address.
 
-It better suit my purpose now. And I hope it'll also help those who has the same demand.
-For more details, see my post here.
+Changes on the logging interface:  
+![seadriod_change](https://wu-2018.github.io/img/blog/2019013001/seadroid_2.png)
+
+It better suits my purpose now. And I hope it'll also help those who has the same demand.
+For more details, [see my post](https://wu-2018.github.io/2019/01/30/Construct-Private-Cloud-Storage-with-Seafile.html).
 
 ***
 # Seafile Android Client [![Build Status](https://secure.travis-ci.org/haiwen/seadroid.png?branch=master)](http://travis-ci.org/haiwen/seadroid)
